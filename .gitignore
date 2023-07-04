@@ -1,6 +1,3 @@
 node_modules/
 secrets.env
 docs
-connect.js
-config.js
-package-lock.json
