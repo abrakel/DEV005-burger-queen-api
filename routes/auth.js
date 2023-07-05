@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config');
+const User = require('../models/users');
 
 const { secret } = config;
 
@@ -23,13 +24,21 @@ module.exports = (app, nextMain) => {
     if (!email || !password) {
       return next(400);
     }
-
     // TODO: autenticar a la usuarix
     // Hay que confirmar si el email y password
     // coinciden con un user en la base de datos
     // Si coinciden, manda un access token creado con jwt
-
-    next();
+    User.findOne({email: email}).then((userDB) => {
+      if(userDB && userDB.password === password){
+        const token = jwt.sign({
+          email,
+          password,
+          exp: Date.now() + 60 * 1000,
+        }, secret);
+        resp.send({ token, email: userDB.email});
+      }
+      resp.send({message: 'not found'});
+    })
   });
 
   return nextMain();

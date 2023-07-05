@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const User = require('../models/users');
 
 const {
   requireAuth,
@@ -9,22 +10,30 @@ const {
   getUsers,
 } = require('../controller/users');
 
+
+
 const initAdminUser = (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
   if (!adminEmail || !adminPassword) {
     return next();
   }
-
   const adminUser = {
     email: adminEmail,
     password: bcrypt.hashSync(adminPassword, 10),
     roles: { admin: true },
   };
-
   // TODO: crear usuaria admin
   // Primero ver si ya existe adminUser en base de datos
   // si no existe, hay que guardarlo
-
+    try{
+      const userDB = User.findOne({email: adminUser.email});
+      if(!userDB){
+        const newAdmin = User.create(adminUser)
+        console.log(newAdmin)
+      }
+    } catch (err) {
+      console.log(err);
+    }
   next();
 };
 
@@ -120,6 +129,20 @@ module.exports = (app, next) => {
   app.post('/users', requireAdmin, (req, resp, next) => {
     // TODO: implementar la ruta para agregar
     // nuevos usuarios
+    const newUser = User.findOne(req.body.email)
+    if(!newUser){
+      const newUser = {
+        email: req.body.email,
+        password: req.body.password,
+        role: req.body.role
+      }
+    try{
+      const newUserDB = User.create(newUser);
+      resp.json(newUserDB);
+    }catch (err) {
+      console.log(err);
+    }
+  }
   });
 
   /**
