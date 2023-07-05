@@ -10,8 +10,6 @@ const {
   getUsers,
 } = require('../controller/users');
 
-
-
 const initAdminUser = (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
   if (!adminEmail || !adminPassword) {
@@ -20,22 +18,27 @@ const initAdminUser = (app, next) => {
   const adminUser = {
     email: adminEmail,
     password: bcrypt.hashSync(adminPassword, 10),
-    roles: { admin: true },
+    roles: "admin",
   };
   // TODO: crear usuaria admin
   // Primero ver si ya existe adminUser en base de datos
   // si no existe, hay que guardarlo
-    try{
-      const userDB = User.findOne({email: adminUser.email});
-      if(!userDB){
-        const newAdmin = User.create(adminUser)
-        console.log(newAdmin)
-      }
-    } catch (err) {
-      console.log(err);
+  User.findOne({email: adminUser.email}).then((userDB) => {
+    if(!userDB){
+      User.create(adminUser).then((createAdmin) => {
+        console.log('Usuario creado' + createAdmin);
+      }) .catch ((err) => {
+        console.log('error al crear usuarioAdmin' + err);
+      })
+    } else {
+      console.log('el adminUser existe');
     }
+  }) .catch ((err) => {
+    console.log(err)
+  });
   next();
 };
+
 
 /*
  * Diagrama de flujo de una aplicación y petición en node - express :

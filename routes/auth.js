@@ -36,8 +36,9 @@ module.exports = (app, nextMain) => {
           exp: Date.now() + 60 * 1000,
         }, secret);
         resp.send({ token, email: userDB.email});
-      }
+      } else {
       resp.send({message: 'not found'});
+      }
     })
   });
 
