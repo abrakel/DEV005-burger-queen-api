@@ -4,15 +4,8 @@ const User = require('../models/users.js');
 module.exports = {
   getUsers: async (req, resp, next) => {
     // TODO: Implementa la función necesaria para traer la colección `users`
-/*     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const users = await User.find()
-        .select("-password -__v")
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean();
-
-    resp.json(users); */
+    req.user = await User.find({}).select('-password -__v');
+    resp.send(req.user);
   },
 
   createUser: (req, resp, next) => {
