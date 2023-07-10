@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const User = require('../models/users');
+const User = require('../models/users.js');
 
 const {
   requireAuth,
@@ -7,8 +7,9 @@ const {
 } = require('../middleware/auth');
 
 const {
-  getUsers,
-} = require('../controller/users');
+  getUsers, 
+  createUser,
+} = require('../controller/users.js');
 
 const initAdminUser = (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
@@ -17,8 +18,8 @@ const initAdminUser = (app, next) => {
   }
   const adminUser = {
     email: adminEmail,
-    password: bcrypt.hashSync(adminPassword, 10),
-    roles: "admin",
+    password: bcrypt.hashSync(adminPassword,10),
+    role: "admin",
   };
   // TODO: crear usuaria admin
   // Primero ver si ya existe adminUser en base de datos
@@ -129,24 +130,21 @@ module.exports = (app, next) => {
    * @code {401} si no hay cabecera de autenticación
    * @code {403} si ya existe usuaria con ese `email`
    */
-  app.post('/users', requireAdmin, (req, resp, next) => {
+  app.post('/users', requireAdmin, createUser, async (req, resp, next) => {
     // TODO: implementar la ruta para agregar
     // nuevos usuarios
-    const newUser = User.findOne(req.body.email)
-    if(!newUser){
-      const newUser = {
-        email: req.body.email,
-        password: req.body.password,
-        role: req.body.role
-      }
-    try{
-      const newUserDB = User.create(newUser);
-      resp.json(newUserDB);
-    }catch (err) {
-      console.log(err);
-    }
-  }
-  });
+
+/*     console.log(req.body) */
+    await User.findOne({email: req.body.email}).then((user) => {
+      if(user){
+        resp.send({message: 'el usuario existe'});
+      } else {
+        console.log('creando usuario')
+        createUser(req.body);
+         next()
+      } 
+    })
+});
 
   /**
    * @name PUT /users

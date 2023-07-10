@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/users.js')
 
 module.exports = (secret) => (req, resp, next) => {
   const { authorization } = req.headers;
+/*   console.log(req.headers) */
 
   if (!authorization) {
     return next();
@@ -13,25 +15,38 @@ module.exports = (secret) => (req, resp, next) => {
     return next();
   }
 
-  jwt.verify(token, secret, (err, decodedToken) => {
+  jwt.verify(token, secret, async (err, decodedToken) => {
     if (err) {
       return next(403);
     }
 
     // TODO: Verificar identidad del usuario usando `decodeToken.uid`
-    
+    req.user = await User.findById(decodedToken._id);
+      if(req.user){
+      console.log(req.user);
+      } else {
+        console.log('id no encontrado en bd')
+        console.log()
+      }
+    return next();
   });
 };
 
-module.exports.isAuthenticated = (req) => (
+module.exports.isAuthenticated = (req) => {
   // TODO: decidir por la informacion del request si la usuaria esta autenticada
-  false
-);
+  if(req.user){
+    console.log('el usuario esta autenticado ' + req.user);
+    return true;
+  } return false;
+};
 
-module.exports.isAdmin = (req) => (
+module.exports.isAdmin = (req) => {
   // TODO: decidir por la informacion del request si la usuaria es admin
-  false
-);
+  if(req.user.role === 'admin'){
+    console.log('el usuario tiene rol ' + req.user.role)
+    return true;
+  } return false;
+};
 
 module.exports.requireAuth = (req, resp, next) => (
   (!module.exports.isAuthenticated(req))

@@ -13,12 +13,13 @@ const userSchema = new Schema({
     type: String,
     required: true
   },
-  roles: {
+  role: {
     type: String,
-    Enum: ["admin", "waiter", "chef"]
+    Enum: ["admin", "waiter", "chef"],
+    default: "waiter"
   }
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model('user', userSchema);
 
 module.exports = User;

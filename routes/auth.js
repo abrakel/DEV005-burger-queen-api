@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config');
-const User = require('../models/users');
+const User = require('../models/users.js');
+const bcrypt = require('bcrypt');
 
 const { secret } = config;
 
@@ -20,7 +21,6 @@ module.exports = (app, nextMain) => {
    */
   app.post('/auth', (req, resp, next) => {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return next(400);
     }
@@ -28,12 +28,15 @@ module.exports = (app, nextMain) => {
     // Hay que confirmar si el email y password
     // coinciden con un user en la base de datos
     // Si coinciden, manda un access token creado con jwt
+    console.log(email)
     User.findOne({email: email}).then((userDB) => {
-      if(userDB && userDB.password === password){
+      if(userDB && bcrypt.compareSync(password, userDB.password) === true){
+        console.log(userDB)
         const token = jwt.sign({
+          _id: userDB._id,
           email,
           password,
-          exp: Date.now() + 60 * 1000,
+          exp: Date.now() + 60 * 60 * 8 * 1000,
         }, secret);
         resp.send({ token, email: userDB.email});
       } else {
