@@ -7,7 +7,8 @@ const {
 } = require('../middleware/auth');
 
 const {
-  getUsers, 
+  getUsers,
+  getUsersByIdOrEmail,
   createUser,
 } = require('../controller/users.js');
 
@@ -29,13 +30,13 @@ const initAdminUser = (app, next) => {
       User.create(adminUser).then((createAdmin) => {
         console.log('Usuario creado' + createAdmin);
       }) .catch ((err) => {
-        console.log('error al crear usuarioAdmin' + err);
+        console.log(err);
       })
     } else {
       console.log('el adminUser existe');
     }
   }) .catch ((err) => {
-    console.log(err)
+    console.log(err);
   });
   next();
 };
@@ -108,8 +109,7 @@ module.exports = (app, next) => {
    * @code {403} si no es ni admin o la misma usuaria
    * @code {404} si la usuaria solicitada no existe
    */
-  app.get('/users/:uid', requireAuth, (req, resp) => {
-  });
+  app.get('/users/:uid', requireAuth, getUsersByIdOrEmail);
 
   /**
    * @name POST /users
@@ -130,21 +130,21 @@ module.exports = (app, next) => {
    * @code {401} si no hay cabecera de autenticación
    * @code {403} si ya existe usuaria con ese `email`
    */
-  app.post('/users', requireAdmin, createUser, async (req, resp, next) => {
+  app.post('/users', requireAdmin, async (req, resp, next) => {
     // TODO: implementar la ruta para agregar
     // nuevos usuarios
-
-/*     console.log(req.body) */
-    await User.findOne({email: req.body.email}).then((user) => {
-      if(user){
-        resp.send({message: 'el usuario existe'});
-      } else {
-        console.log('creando usuario')
-        createUser(req.body);
-         next()
-      } 
-    })
-});
+    const user = await User.findOne({email: req.body.email})
+    if(!req.body.email || !req.body.password){
+      next(400)
+    } else if(user){
+      console.log('el ususario existe');
+       next(403);
+    } else {
+      console.log('creando usuario');
+      createUser(req.body);
+      next()
+    }
+  });
 
   /**
    * @name PUT /users

@@ -6,21 +6,31 @@ module.exports = {
     // TODO: Implementa la función necesaria para traer la colección `users`
     req.user = await User.find({}).select('-password -__v');
     resp.send(req.user);
+    next();
+  },
+
+  getUsersByIdOrEmail: async (req, resp, next) => {
+    try {
+      if(req.body.id){
+        const userById = await User.findById(req.body.id).select('-password -__v');
+        resp.json(userById)
+      } else if(req.body.email){
+        const userByEmail = await User.findOne({email: req.body.email}).select('-password -__v');
+        resp.json(userByEmail)
+    } else {
+      next(404)
+    }
+  }
+    catch (err) {
+      next(err);
+    }
   },
 
   createUser: (req, resp, next) => {
-    const {email, password, role} = req.body;
-    console.log(req.body)
-    if(!email || !password){
-      return next();
-    } else {
-      User.create({
-        email: email,
-        password: bcrypt.hashSync(password,10),
-        role: role
-      })
-        console.log('nuevo usuario creado ');
-        resp.send({message: 'usuario creado exitosamente'})
-    } 
+    User.create({
+      email: req.email,
+      password: bcrypt.hashSync(req.password,10),
+      role: req.role
+    });
   }
 }

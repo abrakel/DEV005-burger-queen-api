@@ -28,19 +28,17 @@ module.exports = (app, nextMain) => {
     // Hay que confirmar si el email y password
     // coinciden con un user en la base de datos
     // Si coinciden, manda un access token creado con jwt
-    console.log(email)
     User.findOne({email: email}).then((userDB) => {
       if(userDB && bcrypt.compareSync(password, userDB.password) === true){
-        console.log(userDB)
         const token = jwt.sign({
           _id: userDB._id,
           email,
           password,
           exp: Date.now() + 60 * 60 * 8 * 1000,
         }, secret);
-        resp.send({ token, email: userDB.email});
+        resp.send({ token });
       } else {
-      resp.send({message: 'not found'});
+        next(404);
       }
     })
   });
