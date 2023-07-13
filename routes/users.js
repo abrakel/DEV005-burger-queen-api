@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/users.js');
 
+
 const {
   requireAuth,
   requireAdmin,
@@ -141,7 +142,7 @@ module.exports = (app, next) => {
        next(403);
     } else {
       console.log('creando usuario');
-      createUser(req.body);
+      createUser();
       next()
     }
   });

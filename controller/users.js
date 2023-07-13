@@ -2,15 +2,19 @@ const bcrypt = require('bcrypt')
 const User = require('../models/users.js');
 
 module.exports = {
-  getUsers: async (req, resp, next) => {
+  getUsers: async (req, resp ) => {
     // TODO: Implementa la función necesaria para traer la colección `users`
-    req.user = await User.find({}).select('-password -__v');
-    resp.send(req.user);
-    next();
+    const page = req.body.page || 1;
+    const limit = req.body.limit || 10;
+    usersList = await User.find({})
+    .select('-password -__v')
+    .skip((page - 1) * limit)
+    .limit(limit);
+    resp.json(usersList);
   },
 
   getUsersByIdOrEmail: async (req, resp, next) => {
-    try {
+/*     try { */
       if(req.body.id){
         const userById = await User.findById(req.body.id).select('-password -__v');
         resp.json(userById)
@@ -20,17 +24,18 @@ module.exports = {
     } else {
       next(404)
     }
-  }
+/*   }
     catch (err) {
       next(err);
-    }
+    } */
   },
 
-  createUser: (req, resp, next) => {
-    User.create({
+  createUser: async (req, resp) => {
+    const newUser = await User.create({
       email: req.email,
       password: bcrypt.hashSync(req.password,10),
       role: req.role
     });
+    return (newUser)
   }
 }
