@@ -30,12 +30,13 @@ module.exports = {
     } */
   },
 
-  createUser: async (req, resp) => {
+  createUser: async (req) => {
     const newUser = await User.create({
       email: req.email,
       password: bcrypt.hashSync(req.password,10),
       role: req.role
     });
-    return (newUser)
+    return newUser;
+    
   }
 }

@@ -142,8 +142,8 @@ module.exports = (app, next) => {
        next(403);
     } else {
       console.log('creando usuario');
-      createUser();
-      next()
+      const newUser = await createUser(req.body);
+      resp.json({_id: newUser._id, email: newUser.email, role: newUser.role});
     }
   });
 
