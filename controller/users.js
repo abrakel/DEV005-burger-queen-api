@@ -13,8 +13,18 @@ module.exports = {
     resp.json(usersList);
   },
 
-  getUsersByIdOrEmail: async (req, resp, next) => {
-      if(req.body.id){
+  getOneUser: async (user) => {
+    console.log(user)
+    const filter = {$or:[{email: user},{_id: user}]};
+    const userExist = await User.findOne(filter);
+    console.log(userExist)
+    if (!userExist){
+      throw new Error('no existe usuario');
+    } return userExist;
+  },
+
+
+/*       if(req.body.id){
         const userById = await User.findById(req.body.id).select('-password -__v');
         resp.json(userById)
       } else if(req.body.email){
@@ -22,8 +32,7 @@ module.exports = {
         resp.json(userByEmail)
     } else {
       next(404)
-    }
-  },
+    } */
 
   createUser: async (req) => {
     const newUser = await User.create({
@@ -38,11 +47,11 @@ module.exports = {
 
   updateUser: async (user, updateFiles) => {
     const {email, password, role} = updateFiles
-    const filter = {$or:[{email: user},{id: user}]};
+    const filter = {$or:[{email: user},{_id: user}]};
     const userExist = await User.findOne(filter);
     if (!userExist){
       throw new Error('no existe usuario');
-    } else if (!["admin", "waiter", "chef"].includes(role)){
+    } else if (role && !["admin", "waiter", "chef"].includes(role)){
       throw new Error('rol incorrecto');
     } 
     const updateUser = await User.findOneAndUpdate(filter, {email, password, role}, {new: true, select: '_id email role'});

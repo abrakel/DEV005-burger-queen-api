@@ -10,7 +10,7 @@ const {
 
 const {
   getUsers,
-  getUsersByIdOrEmail,
+  getOneUser,
   createUser,
   updateUser,
 } = require('../controller/users.js');
@@ -112,7 +112,18 @@ module.exports = (app, next) => {
    * @code {403} si no es ni admin o la misma usuaria
    * @code {404} si la usuaria solicitada no existe
    */
-  app.get('/users/:uid', requireAuth, getUsersByIdOrEmail);
+  app.get('/users/:uid', requireAuth, async (req, resp, next) => {
+    const user = req.params.uid;
+    try{
+    const getUser = await getOneUser(user)
+    resp.json({_id: getUser._id, email: getUser.email, role: getUser.role});
+    } catch (err) {
+      if (err.message === 'no existe usuario'){
+        next(404)
+      }
+    }
+  });
+
 
   /**
    * @name POST /users
