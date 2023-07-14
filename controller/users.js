@@ -14,7 +14,6 @@ module.exports = {
   },
 
   getUsersByIdOrEmail: async (req, resp, next) => {
-/*     try { */
       if(req.body.id){
         const userById = await User.findById(req.body.id).select('-password -__v');
         resp.json(userById)
@@ -24,10 +23,6 @@ module.exports = {
     } else {
       next(404)
     }
-/*   }
-    catch (err) {
-      next(err);
-    } */
   },
 
   createUser: async (req) => {
@@ -36,7 +31,19 @@ module.exports = {
       password: bcrypt.hashSync(req.password,10),
       role: req.role
     });
-    return newUser;
-    
+    await newUser.save()
+      return newUser;
+ 
+  },
+
+  updateUser: async (userId, updateFiles) => {
+    const {email, password, role} = updateFiles
+    const userExist = await User.findById(userId)
+    if (!userExist){
+      throw new Error('no existe usuario');
+    } else if (!["admin", "waiter", "chef"].includes(role)){
+      throw new Error('rol incorrecto');
+    } const update = await User.findByIdAndUpdate(userId, {email, password, role}, {new: true})
+    return update;
   }
 }

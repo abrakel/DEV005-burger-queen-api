@@ -22,7 +22,7 @@ module.exports = (secret) => (req, resp, next) => {
     // TODO: Verificar identidad del usuario usando `decodeToken.uid`
     req.user = await User.findById(decodedToken._id);
       if(!req.user){
-        console.log('id no encontrado en bd');
+        next(404)
       }
       return next();
   });

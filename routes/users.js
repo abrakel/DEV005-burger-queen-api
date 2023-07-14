@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/users.js');
 
 
+
 const {
   requireAuth,
   requireAdmin,
@@ -11,6 +12,7 @@ const {
   getUsers,
   getUsersByIdOrEmail,
   createUser,
+  updateUser,
 } = require('../controller/users.js');
 
 const initAdminUser = (app, next) => {
@@ -137,7 +139,9 @@ module.exports = (app, next) => {
     const user = await User.findOne({email: req.body.email})
     if(!req.body.email || !req.body.password){
       next(400)
-    } else if(user){
+    } else if(!["admin", "waiter", "chef"].includes(req.body.role)){
+      next(400)
+    }else if(user){
       console.log('el ususario existe');
        next(403);
     } else {
@@ -169,7 +173,19 @@ module.exports = (app, next) => {
    * @code {403} una usuaria no admin intenta de modificar sus `roles`
    * @code {404} si la usuaria solicitada no existe
    */
-  app.put('/users/:uid', requireAuth, (req, resp, next) => {
+  app.put('/users/:uid', requireAuth, async (req, resp, next) => {
+    const userId = req.params.uid;
+    const updateFiles = req.body;
+    try {
+      const updateResult = await updateUser(userId, updateFiles);
+      resp.json({_id: updateResult._id, email: updateResult.email, role: updateResult.role})
+    } catch (err) {
+      if (err.message === 'no existe usuario'){
+        next(404)
+      } else if (err.message === 'rol incorrecto'){
+        next(400)
+      }
+    }
   });
 
   /**
