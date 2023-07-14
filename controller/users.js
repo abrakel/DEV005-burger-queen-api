@@ -36,14 +36,16 @@ module.exports = {
  
   },
 
-  updateUser: async (userId, updateFiles) => {
+  updateUser: async (user, updateFiles) => {
     const {email, password, role} = updateFiles
-    const userExist = await User.findById(userId)
+    const filter = {$or:[{email: user},{id: user}]};
+    const userExist = await User.findOne(filter);
     if (!userExist){
       throw new Error('no existe usuario');
     } else if (!["admin", "waiter", "chef"].includes(role)){
       throw new Error('rol incorrecto');
-    } const update = await User.findByIdAndUpdate(userId, {email, password, role}, {new: true})
-    return update;
+    } 
+    const updateUser = await User.findOneAndUpdate(filter, {email, password, role}, {new: true, select: '_id email role'});
+    return updateUser;
   }
 }

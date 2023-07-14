@@ -142,10 +142,8 @@ module.exports = (app, next) => {
     } else if(!["admin", "waiter", "chef"].includes(req.body.role)){
       next(400)
     }else if(user){
-      console.log('el ususario existe');
        next(403);
     } else {
-      console.log('creando usuario');
       const newUser = await createUser(req.body);
       resp.json({_id: newUser._id, email: newUser.email, role: newUser.role});
     }
@@ -174,11 +172,11 @@ module.exports = (app, next) => {
    * @code {404} si la usuaria solicitada no existe
    */
   app.put('/users/:uid', requireAuth, async (req, resp, next) => {
-    const userId = req.params.uid;
+    const user = req.params.uid;
     const updateFiles = req.body;
     try {
-      const updateResult = await updateUser(userId, updateFiles);
-      resp.json({_id: updateResult._id, email: updateResult.email, role: updateResult.role})
+      const update = await updateUser(user, updateFiles);
+      resp.json(update)
     } catch (err) {
       if (err.message === 'no existe usuario'){
         next(404)
