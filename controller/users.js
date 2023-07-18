@@ -1,38 +1,41 @@
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcrypt');
 const User = require('../models/users.js');
+const mongoose = require('mongoose');
 
 module.exports = {
   getUsers: async (req, resp ) => {
     // TODO: Implementa la función necesaria para traer la colección `users`
     const page = req.body.page || 1;
     const limit = req.body.limit || 10;
-    usersList = await User.find({})
+    let usersList = await User.find({})
     .select('-password -__v')
     .skip((page - 1) * limit)
     .limit(limit);
     resp.json(usersList);
   },
 
-  getOneUser: async (user) => {
-    console.log(user)
-    const filter = {$or:[{email: user},{_id: user}]};
-    const userExist = await User.findOne(filter);
-    console.log(userExist)
-    if (!userExist){
-      throw new Error('no existe usuario');
-    } return userExist;
+  getOneUser: async (req, resp, next) => {
+  const {uid} = req.params;
+  let filter;
+  const isObjectId = /^[0-9a-fA-F]{24}$/.test(uid);
+  if (isObjectId) {
+    filter = { _id: uid}
+  } else {
+    filter = {email: uid.toLowerCase()}
+  }
+  console.log(uid)
+  console.log(filter)
+  try {
+    const userExist = await User.findOne(filter).exec();
+     if (!userExist) {
+      return next(404);
+    } else if (req.user.role === 'admin' || req.user.email === userExist.email) {
+      return resp.json({_id: userExist._id, email: userExist.email, role: userExist.role});
+    } return next (403)
+  } catch (err) {
+    console.log(err);
+  }
   },
-
-
-/*       if(req.body.id){
-        const userById = await User.findById(req.body.id).select('-password -__v');
-        resp.json(userById)
-      } else if(req.body.email){
-        const userByEmail = await User.findOne({email: req.body.email}).select('-password -__v');
-        resp.json(userByEmail)
-    } else {
-      next(404)
-    } */
 
   createUser: async (req) => {
     const newUser = await User.create({
@@ -42,19 +45,26 @@ module.exports = {
     });
     await newUser.save()
       return newUser;
- 
   },
 
-  updateUser: async (user, updateFiles) => {
-    const {email, password, role} = updateFiles
-    const filter = {$or:[{email: user},{_id: user}]};
-    const userExist = await User.findOne(filter);
-    if (!userExist){
-      throw new Error('no existe usuario');
-    } else if (role && !["admin", "waiter", "chef"].includes(role)){
-      throw new Error('rol incorrecto');
-    } 
-    const updateUser = await User.findOneAndUpdate(filter, {email, password, role}, {new: true, select: '_id email role'});
-    return updateUser;
+  updateUser: async (req, resp, next) => {
+    const {email, password, role} = req.body
+    const {uid} = req.params;
+    let filter;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(uid);
+    if (isObjectId) {
+      filter = { _id: uid};
+    } else {
+      filter = {email: uid.toLowerCase()};
+    }
+    try{
+      const userExist = await User.findOne(filter).exec();
+      if (!userExist){
+        return next(404);
+      } const updateUser = await User.findOneAndUpdate(filter, {email, password, role}, {new: true, select: '_id email role'});
+      return resp.json(updateUser);
+    } catch (err) {
+      console.log(err);
+    }
   }
 }

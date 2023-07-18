@@ -112,18 +112,7 @@ module.exports = (app, next) => {
    * @code {403} si no es ni admin o la misma usuaria
    * @code {404} si la usuaria solicitada no existe
    */
-  app.get('/users/:uid', requireAuth, async (req, resp, next) => {
-    const user = req.params.uid;
-    try{
-    const getUser = await getOneUser(user)
-    resp.json({_id: getUser._id, email: getUser.email, role: getUser.role});
-    } catch (err) {
-      if (err.message === 'no existe usuario'){
-        next(404)
-      }
-    }
-  });
-
+  app.get('/users/:uid', requireAuth, getOneUser);
 
   /**
    * @name POST /users
@@ -150,7 +139,7 @@ module.exports = (app, next) => {
     const user = await User.findOne({email: req.body.email})
     if(!req.body.email || !req.body.password){
       next(400)
-    } else if(!["admin", "waiter", "chef"].includes(req.body.role)){
+    } else if(req.body.role && !["admin", "waiter", "chef"].includes(req.body.role)){
       next(400)
     }else if(user){
        next(403);
@@ -182,20 +171,7 @@ module.exports = (app, next) => {
    * @code {403} una usuaria no admin intenta de modificar sus `roles`
    * @code {404} si la usuaria solicitada no existe
    */
-  app.put('/users/:uid', requireAuth, async (req, resp, next) => {
-    const user = req.params.uid;
-    const updateFiles = req.body;
-    try {
-      const update = await updateUser(user, updateFiles);
-      resp.json(update)
-    } catch (err) {
-      if (err.message === 'no existe usuario'){
-        next(404)
-      } else if (err.message === 'rol incorrecto'){
-        next(400)
-      }
-    }
-  });
+  app.put('/users/:uid', requireAuth, updateUser);
 
   /**
    * @name DELETE /users
@@ -214,6 +190,7 @@ module.exports = (app, next) => {
    * @code {404} si la usuaria solicitada no existe
    */
   app.delete('/users/:uid', requireAuth, (req, resp, next) => {
+
   });
 
   initAdminUser(app, next);
