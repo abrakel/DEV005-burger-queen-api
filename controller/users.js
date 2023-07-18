@@ -1,6 +1,5 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/users.js');
-const mongoose = require('mongoose');
 const { isAdmin } = require('../middleware/auth.js');
 
 module.exports = {
@@ -58,22 +57,45 @@ module.exports = {
     } else {
       filter = {email: uid.toLowerCase()};
     }
-    console.log(req.user)
     try{
       const userExist = await User.findOne(filter).exec();
       if (!userExist){
         return next(404);
       } if (req.user.role !== 'admin' && (role && role !== userExist.role)){
-        console.log('user no es admin y el rol existe y es diferente')
         return next(403);
       } if ( req.user.role !== 'admin' && req.user.email !== userExist.email) {
-        console.log('la auth de usuario es diferente a quien quieore actualizar')
         return next(403);
       } if(req.user.role === 'admin' || req.user.email === userExist.email) {
         const hashedPassword = bcrypt.hashSync(password, 10);
         const updateUser = await User.findOneAndUpdate(filter, {email, password: hashedPassword, role}, {new: true, select: '_id email role'});
         return resp.json(updateUser);
       }
+    } catch (err) {
+      console.log(err);
+    }
+  },
+
+  deleteUser: async(req, resp, next) => {
+    const {uid} = req.params;
+    let filter;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(uid);
+    if (isObjectId) {
+      filter = { _id: uid};
+    } else {
+      filter = {email: uid.toLowerCase()};
+    }
+    console.log(req.user)
+    try{
+      const userExist = await User.findOne(filter).exec();
+      if (!userExist){
+        return next(404);
+      } if (req.user.role === 'admin' || req.user.email === userExist.email){
+      const deleteUser = await User.findOneAndDelete(filter);
+      return resp.json({_id: deleteUser._id, email: deleteUser.email, role: deleteUser.role});
+      } else {
+        next(403);
+      }
+      
     } catch (err) {
       console.log(err);
     }
