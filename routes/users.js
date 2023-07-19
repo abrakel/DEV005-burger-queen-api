@@ -1,8 +1,6 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/users.js');
 
-
-
 const {
   requireAuth,
   requireAdmin,
