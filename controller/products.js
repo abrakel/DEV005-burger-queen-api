@@ -59,7 +59,30 @@ module.exports = {
   },
 
   updateProduct: async (req, resp, next) => {
-
+    const {name, price, image, type} = req.body
+    const {productId} = req.params;
+    let filter;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(productId);
+    if (isObjectId) {
+      filter = { _id: productId};
+    } else {
+      filter = {name: productId.toLowerCase()};
+    }
+    try{
+      if (!name && !price && !image && !type){
+        return next(400);
+      } 
+      const productExist = await Product.findOne(filter).exec();
+      if(!productExist){
+        return next(404)
+      }if (req.user.role !== 'admin'){
+        return next(403);
+      } 
+      const updateProduct = await Product.findOneAndUpdate(filter, {name, price, image, type}, {new: true, select: '_id name price image type dataEntry'});
+      return resp.json(updateProduct);
+      } catch (err) {
+      console.log(err);
+    }
   },
 
   deleteProduct: async (req, resp, next) => {
