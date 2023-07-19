@@ -26,12 +26,36 @@ module.exports = {
     dataEntry: newProduct.dataEntry});
   },
 
-  getProducts: async (req, resp, next) => {
-
+  getProducts: async (req, resp) => {
+    const page = req.body.page || 1;
+    const limit = req.body.limit || 10;
+    let usersList = await Product.find({})
+    .select('-__v')
+    .skip((page - 1) * limit)
+    .limit(limit);
+    return resp.json(usersList);
   },
 
   getOneProduct: async (req, resp, next) => {
-
+    const {productId} = req.params;
+    let filter;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(productId);
+    if (isObjectId) {
+      filter = { _id: productId}
+    } else {
+      filter = {name: productId.toLowerCase()}
+    }
+    try {
+      const productExist = await Product.findOne(filter).exec();
+       if (!productExist) {
+        return next(404);
+      } 
+        return resp.json({_id: productExist._id, name: productExist.name,
+          price: productExist.price, image: productExist.image, type: productExist.type,
+          dataEntry: productExist.dataEntry}); 
+    } catch (err) {
+      console.log(err);
+    }
   },
 
   updateProduct: async (req, resp, next) => {
