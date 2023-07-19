@@ -84,7 +84,6 @@ module.exports = {
     } else {
       filter = {email: uid.toLowerCase()};
     }
-    console.log(req.user)
     try{
       const userExist = await User.findOne(filter).exec();
       if (!userExist){

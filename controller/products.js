@@ -86,6 +86,28 @@ module.exports = {
   },
 
   deleteProduct: async (req, resp, next) => {
-
+    const {productId} = req.params;
+    let filter;
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(productId);
+    if (isObjectId) {
+      filter = { _id: productId};
+    } else {
+      filter = {name: productId.toLowerCase()};
+    }
+    try{
+      const productExist = await Product.findOne(filter).exec();
+      if (!productExist){
+        return next(404);
+      } if (req.user.role !== 'admin'){
+        next(403);
+      } else {
+        const deleteProduct = await Product.findOneAndDelete(filter);
+        return resp.json({_id: deleteProduct._id, name: deleteProduct.name,
+        price: deleteProduct.price, image: deleteProduct.image, type: deleteProduct.type, 
+        dataEntry: deleteProduct.dataEntry});
+      }
+    } catch (err) {
+      console.log(err);
+    }
   }
 }
