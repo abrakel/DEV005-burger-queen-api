@@ -55,6 +55,7 @@ module.exports = {
           dataEntry: productExist.dataEntry}); 
     } catch (err) {
       console.log(err);
+      return next(400);
     }
   },
 
@@ -81,7 +82,8 @@ module.exports = {
       const updateProduct = await Product.findOneAndUpdate(filter, {name, price, image, type}, {new: true, select: '_id name price image type dataEntry'});
       return resp.json(updateProduct);
       } catch (err) {
-      console.log(err);
+        console.log(err);
+        return next(400);
     }
   },
 
@@ -108,6 +110,7 @@ module.exports = {
       }
     } catch (err) {
       console.log(err);
+      return next(400);
     }
   }
 }
