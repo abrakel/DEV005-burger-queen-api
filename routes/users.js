@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const User = require('../models/users.js');
 
 const {
   requireAuth,
@@ -7,26 +8,41 @@ const {
 
 const {
   getUsers,
-} = require('../controller/users');
+  getOneUser,
+  createUser,
+  updateUser,
+  deleteUser,
+} = require('../controller/users.js');
 
 const initAdminUser = (app, next) => {
   const { adminEmail, adminPassword } = app.get('config');
   if (!adminEmail || !adminPassword) {
     return next();
   }
-
   const adminUser = {
     email: adminEmail,
-    password: bcrypt.hashSync(adminPassword, 10),
-    roles: { admin: true },
+    password: bcrypt.hashSync(adminPassword,10),
+    role: "admin",
   };
-
   // TODO: crear usuaria admin
   // Primero ver si ya existe adminUser en base de datos
   // si no existe, hay que guardarlo
-
+  User.findOne({email: adminUser.email}).then((userDB) => {
+    if(!userDB){
+      User.create(adminUser).then((createAdmin) => {
+        console.log('Usuario creado' + createAdmin);
+      }) .catch ((err) => {
+        console.log(err);
+      })
+    } else {
+      console.log('el adminUser existe');
+    }
+  }) .catch ((err) => {
+    console.log(err);
+  });
   next();
 };
+
 
 /*
  * Diagrama de flujo de una aplicación y petición en node - express :
@@ -95,8 +111,7 @@ module.exports = (app, next) => {
    * @code {403} si no es ni admin o la misma usuaria
    * @code {404} si la usuaria solicitada no existe
    */
-  app.get('/users/:uid', requireAuth, (req, resp) => {
-  });
+  app.get('/users/:uid', requireAuth, getOneUser);
 
   /**
    * @name POST /users
@@ -117,9 +132,20 @@ module.exports = (app, next) => {
    * @code {401} si no hay cabecera de autenticación
    * @code {403} si ya existe usuaria con ese `email`
    */
-  app.post('/users', requireAdmin, (req, resp, next) => {
+  app.post('/users', requireAdmin, async (req, resp, next) => {
     // TODO: implementar la ruta para agregar
     // nuevos usuarios
+    const user = await User.findOne({email: req.body.email})
+    if(!req.body.email || !req.body.password){
+      next(400)
+    } else if(req.body.role && !["admin", "waiter", "chef"].includes(req.body.role)){
+      next(400)
+    }else if(user){
+       next(403);
+    } else {
+      const newUser = await createUser(req.body);
+      resp.json({_id: newUser._id, email: newUser.email, role: newUser.role});
+    }
   });
 
   /**
@@ -144,8 +170,7 @@ module.exports = (app, next) => {
    * @code {403} una usuaria no admin intenta de modificar sus `roles`
    * @code {404} si la usuaria solicitada no existe
    */
-  app.put('/users/:uid', requireAuth, (req, resp, next) => {
-  });
+  app.put('/users/:uid', requireAuth, updateUser);
 
   /**
    * @name DELETE /users
@@ -163,8 +188,7 @@ module.exports = (app, next) => {
    * @code {403} si no es ni admin o la misma usuaria
    * @code {404} si la usuaria solicitada no existe
    */
-  app.delete('/users/:uid', requireAuth, (req, resp, next) => {
-  });
+  app.delete('/users/:uid', requireAuth, deleteUser);
 
   initAdminUser(app, next);
 };

@@ -1,5 +1,16 @@
-exports.port = process.argv[2] || process.env.PORT || 8080;
-exports.dbUrl = process.env.MONGO_URL || process.env.DB_URL || 'mongodb://127.0.0.1:27017/test';
-exports.secret = process.env.JWT_SECRET || 'esta-es-la-api-burger-queen';
-exports.adminEmail = process.env.ADMIN_EMAIL || 'admin@localhost';
-exports.adminPassword = process.env.ADMIN_PASSWORD || 'changeme';
+const dotenv = require('dotenv');
+dotenv.config();
+
+const port = process.argv[2] || process.env.PORT;
+const dbUrl = process.env.DB_URL; 
+const secret = process.env.JWT_SECRET;
+const adminEmail = process.env.ADMIN_EMAIL;
+const adminPassword = process.env.ADMIN_PASSWORD;
+
+module.exports = {
+    port,
+    dbUrl,
+    secret,
+    adminEmail,
+    adminPassword
+};
